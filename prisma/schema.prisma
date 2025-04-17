@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model Group{
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  description String @db.VarChar(255)
+  lead Lead[] @relation("GroupLeads") //relação muito pra muitos com a lead
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt //atualiza automaticamente
+}
+
+model Lead{
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  email String @db.VarChar(255) @unique
+  phone String @db.VarChar(255) @unique
+  status LeadStatus @default(New)
+  Group Group[] @relation("GroupLeads")//relação muito pra muitos com o group
+  created_at DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  campaings LeadCampaign[]
+}
+
+
+model Campaign{
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  description String @db.VarChar(255)
+  startDate DateTime 
+  endDate DateTime?
+
+  leads LeadCampaign[]
+}
+
+model LeadCampaign{
+  leadId Int
+  campaingId Int
+  status LeadCampaingStatus @default(New)
+  campaign Campaign @relation(fields: [campaingId], references: [id])
+  lead Lead @relation(fields: [leadId], references: [id])
+  @@id([leadId, campaingId]) //define a chave composta
+}
+
+//da pra criar um enum dentro do prorpio prisma schema
+enum LeadStatus {
+  New
+  Contacted
+  Qualified
+  Converted
+  Unresponsive
+  Disqualified
+  Archived
+}
+
+enum LeadCampaingStatus {
+  New
+  Engaged
+  FollowUp_Scheduled
+  Contacted
+  Converted
+  Unresponsive
+  Disqualified
+  Re_Engaged
+  Opted_Out
+}
