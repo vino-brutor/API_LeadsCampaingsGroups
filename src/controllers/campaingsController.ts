@@ -1,13 +1,21 @@
 import { Handler } from "express";
-import { prisma } from "../database";
 import { CreateCampaignRequestSchema, UpdateCampaignRequestSchema } from "./schema/campaignRequestSchema";
 import { HttpError } from "../errors/HttpError";
+import { ICampaignRepository } from "../repositories/campaignsRepository";
 
 export class CampaingController {
+    private campaignRepository: ICampaignRepository
+
+    constructor(campaignRepository: ICampaignRepository){
+        this.campaignRepository = campaignRepository
+    }
+
     index: Handler = async (req, res, next) => {
         try{
-            const campaings = await prisma.campaign.findMany()
-             res.status(200).json(campaings)
+            // const campaings = await prisma.campaign.findMany()
+            const campaings = await this.campaignRepository.find()
+             
+            res.status(200).json(campaings)
         }catch(error){
             next(error)
         }
@@ -17,9 +25,11 @@ export class CampaingController {
         try{
 
             const body = CreateCampaignRequestSchema.parse(req.body)
-            const newCampaing = await prisma.campaign.create({
-                data: body
-            })
+            // const newCampaing = await prisma.campaign.create({
+            //     data: body
+            // })
+
+            const newCampaing = await this.campaignRepository.create(body)
 
             if(newCampaing){
                 res.status(201).json(newCampaing)
@@ -37,16 +47,18 @@ export class CampaingController {
 
             if(isNaN(+req.params.id)) throw new HttpError("Id must be a number", 400)
 
-            const capampaignUnique = await prisma.campaign.findUnique({
-                where: {id: +req.params.id},
-                include: {
-                    leads:{
-                        include: {
-                            lead: true
-                        }
-                    }
-                }
-            })
+
+            const capampaignUnique = await this.campaignRepository.findById(+req.params.Id)    
+            // const capampaignUnique = await prisma.campaign.findUnique({
+            //     where: {id: +req.params.id},
+            //     include: {
+            //         leads:{
+            //             include: {
+            //                 lead: true
+            //             }
+            //         }
+            //     }
+            // })
 
             if(!capampaignUnique) throw new HttpError("Campaign not found", 404 )
 
@@ -61,16 +73,15 @@ export class CampaingController {
             if(isNaN(+req.params.id)) throw new HttpError("Id must be a number", 404 )
             const body = UpdateCampaignRequestSchema.parse(req.body)
 
-            const capampaignUnique = await prisma.campaign.findUnique({
-                where: {id: +req.params.id}
-            })
+            // const updatedCampaign = await prisma.campaign.update({
+            //     where: {id: +req.params.id},
+            //     data: body
+            // })
 
-            if(!capampaignUnique) throw new HttpError("Campaign not found", 404)
+             const updatedCampaign = await this.campaignRepository.updateById(+req.params.id, body)
 
-            const updatedCampaign = await prisma.campaign.update({
-                where: {id: +req.params.id},
-                data: body
-            })
+            if(!updatedCampaign) throw new HttpError("Campaign not found", 404)
+
 
             res.status(200).json(updatedCampaign)
         }catch(error){
@@ -85,14 +96,13 @@ export class CampaingController {
 
             const body = CreateCampaignRequestSchema.parse(req.body)
     
-            const capampaignUnique = await prisma.campaign.findUnique({
-                where: {id: +req.params.id}
-            })
+            // const deletedCampaign = await prisma.campaign.delete({
+            //     where: {id: +req.params.id}
+            // })
     
-            if(!capampaignUnique) throw new HttpError("Campaign not found", 404)
-            const deletedCampaign = await prisma.campaign.delete({
-                where: {id: +req.params.id}
-            })
+            const deletedCampaign = await this.campaignRepository.deleteById(+req.params.id)
+
+            if(!deletedCampaign) throw new HttpError("Campaign not found", 404)
             res.status(200).json(deletedCampaign)
         }catch(error){
             next(error)

@@ -1,19 +1,9 @@
 import {Router} from "express"
 import { HttpError } from "./errors/HttpError"
-import { LeadsController } from "./controllers/leadsController"
-import { errorHandlerMiddleware } from "./middlewares/errorHandler"
-import { GroupsController } from "./controllers/GroupsController"
-import { CampaingController } from "./controllers/campaingsController"
-import { CampaignLeadsController } from "./controllers/CampaignLeadsController"
-import { GroupLeadController } from "./controllers/GroupLeadsController"
+import { campaignController, campaignLeadsController, groupLeadsController, groupsController, leadsController } from "./container"
+
 
 const router = Router()
-
-const leadsController = new LeadsController()
-const groupsController = new GroupsController()
-const campaignController = new CampaingController()
-const campaignLeadsController = new CampaignLeadsController()
-const groupLeadsController = new GroupLeadController()
 
 //rotas leads com o controler de erro
 router.get("/leads", leadsController.index)
@@ -36,10 +26,13 @@ router.get("/campaigns/:id",campaignController.show)
 router.put("/campaigns/:id",campaignController.update)
 router.delete("/campaigns/:id",campaignController.delete)
 
+//rotas de leads em campanhas
 router.get("campaigns/:campaignId/leads", campaignLeadsController.getLeads)
-router.post("/campaigns/:campaignId/leads")
-router.put("/campaigns/:campaignId/leads/:leadId")
+router.post("/campaigns/:campaignId/leads", campaignLeadsController.addLeads)
+router.put("/campaigns/:campaignId/leads/:leadId", campaignLeadsController.updateLeadStatus)
+router.put("/campaigns/:campaignId/leads/:leadId", campaignLeadsController.removeLead)
 
+//rota de leads em grupos
 router.get("/groups/:groupId/leads", groupLeadsController.getLeadsInGroup)
 router.post("/groups/:groupId/leads", groupLeadsController.addLeadInGroup)
 router.delete("/group/:groupId/leads/:leadId", groupLeadsController.removeLeadFromGroup)
